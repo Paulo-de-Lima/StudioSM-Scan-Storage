@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Dados locais
+backend/data/
+backend/uploads/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
