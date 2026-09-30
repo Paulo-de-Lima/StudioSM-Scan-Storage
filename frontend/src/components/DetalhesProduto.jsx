@@ -1,5 +1,6 @@
 import { ImageOff, Pencil, Trash2 } from 'lucide-react'
 import { descreverNiveis } from '../utils/catalogo.js'
+import { moeda } from '../utils/formato.js'
 import Modal from './Modal.jsx'
 import StatusBadge from './StatusBadge.jsx'
 
@@ -34,6 +35,7 @@ export default function DetalhesProduto({ produto, aoFechar, aoEditar, aoExcluir
             <div><dt>Nome</dt><dd>{produto.nome}</dd></div>
             <div><dt>Marca</dt><dd>{produto.marca}</dd></div>
             <div><dt>Categoria</dt><dd>{produto.categoria}</dd></div>
+            <div><dt>Preço de venda</dt><dd>{moeda(produto.preco)}</dd></div>
             <div>
               <dt>Níveis de estoque</dt>
               <dd className="detalhes-niveis">

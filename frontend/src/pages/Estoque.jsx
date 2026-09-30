@@ -8,6 +8,8 @@ import Modal from '../components/Modal.jsx'
 import ProdutoForm, { formDoProduto } from '../components/ProdutoForm.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { recarregarCatalogo, STATUS, useCatalogo } from '../utils/catalogo.js'
+import { moeda } from '../utils/formato.js'
+import { useAoAlterarEstoque } from '../utils/vendas.js'
 
 const FILTROS_INICIAIS = { categoria: '', marca: '', status: '', ordenar: 'nome' }
 
@@ -62,6 +64,9 @@ export default function Estoque({ ativo }) {
   useEffect(() => {
     if (ativo) carregar()
   }, [ativo, carregar])
+
+  // Vendas registradas/editadas/excluídas mudam as quantidades.
+  useAoAlterarEstoque(() => carregar())
 
   const grupos = [
     {
@@ -217,6 +222,7 @@ export default function Estoque({ ativo }) {
                 <div><dt>ID</dt><dd>{p.codigo}</dd></div>
                 <div><dt>Categoria</dt><dd>{p.categoria}</dd></div>
                 <div><dt>Quantidade</dt><dd>{p.quantidade}</dd></div>
+                <div><dt>Preço</dt><dd>{moeda(p.preco)}</dd></div>
               </dl>
               <div className="produto-acoes">
                 <button type="button" className="botao secundario com-icone" onClick={() => setEditando(p)}>

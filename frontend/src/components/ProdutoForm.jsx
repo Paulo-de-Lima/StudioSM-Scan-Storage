@@ -13,6 +13,7 @@ export const FORM_VAZIO = {
     categoria: '',
     nome: '',
     marca: '',
+    preco: '',
     limite_critico: '',
     limite_baixo: '',
     em_estoque: '',
@@ -30,6 +31,7 @@ export function formDoProduto(produto) {
       categoria: produto.categoria,
       nome: produto.nome,
       marca: produto.marca,
+      preco: produto.preco.toFixed(2),
       limite_critico: String(produto.limite_critico),
       limite_baixo: String(produto.limite_baixo),
       em_estoque: String(produto.limite_baixo + 1),
@@ -41,7 +43,7 @@ export function formDoProduto(produto) {
   }
 }
 
-const CAMPOS_ENVIADOS = ['codigo', 'categoria', 'nome', 'marca', 'limite_critico', 'limite_baixo', 'quantidade']
+const CAMPOS_ENVIADOS = ['codigo', 'categoria', 'nome', 'marca', 'preco', 'limite_critico', 'limite_baixo', 'quantidade']
 const numero = (texto) => (texto === '' ? NaN : Number(texto))
 
 function SelectGerenciavel({ id, rotulo, name, valor, opcoes, aoAlterar, aoGerenciar, vazio }) {
@@ -211,6 +213,24 @@ export default function ProdutoForm({ form, setForm, aoSalvar, textoBotao = 'Sal
             aoGerenciar={() => setGerenciando('marcas')}
             vazio={marcas.length ? 'Selecione…' : 'Cadastre uma marca →'}
           />
+
+          <label className="campo">
+            <span>Preço de venda (R$) *</span>
+            <div className="campo-moeda">
+              <span aria-hidden="true">R$</span>
+              <input
+                name="preco"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                required
+                value={campos.preco}
+                onChange={alterar}
+                placeholder="0,00"
+              />
+            </div>
+          </label>
 
           <fieldset className="niveis campo-largo">
             <legend>Níveis de estoque *</legend>

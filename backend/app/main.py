@@ -15,10 +15,12 @@ from .models import (
     CATEGORIAS_PADRAO,
     EXPR_STATUS,
     Categoria,
+    ItemVenda,
     Marca,
     Produto,
 )
 from .schemas import CategoriaIn, CategoriaOut, LoginIn, MarcaIn, MarcaOut, ProdutoOut
+from .vendas import router as rotas_vendas
 
 
 def colunas_da_tabela(con, tabela: str) -> set[str]:
@@ -56,6 +58,19 @@ def migrar_banco_antigo(tabelas_existentes: set[str]) -> None:
                                          WHERE c.nome = produtos.categoria)
                        WHERE EXISTS (SELECT 1 FROM categorias c WHERE c.nome = produtos.categoria)"""
                 )
+        # v4 não tinha desconto nos itens de venda.
+        if "itens_venda" in tabelas_existentes and "desconto_centavos" not in colunas_da_tabela(
+            con, "itens_venda"
+        ):
+            con.exec_driver_sql(
+                "ALTER TABLE itens_venda ADD COLUMN desconto_centavos INTEGER NOT NULL DEFAULT 0"
+            )
+
+        # v3 não tinha preço.
+        if "preco_centavos" not in colunas_produto:
+            con.exec_driver_sql(
+                "ALTER TABLE produtos ADD COLUMN preco_centavos INTEGER NOT NULL DEFAULT 0"
+            )
         if "limite_critico" in colunas_categoria:
             con.exec_driver_sql("ALTER TABLE categorias DROP COLUMN limite_critico")
             con.exec_driver_sql("ALTER TABLE categorias DROP COLUMN limite_baixo")
@@ -81,6 +96,7 @@ def preparar_banco() -> None:
 preparar_banco()
 
 app = FastAPI(title="StudioSM - Estoque")
+app.include_router(rotas_vendas)
 
 TAMANHO_MAX_FOTO = 10 * 1024 * 1024  # 10 MB
 EXTENSOES_FOTO = {
@@ -362,6 +378,7 @@ async def criar_produto(
     quantidade: Annotated[int, Form(ge=0)],
     limite_critico: Annotated[int, Form(ge=0)],
     limite_baixo: Annotated[int, Form(ge=1)],
+    preco: Annotated[float, Form(ge=0, le=10_000_000)],
     foto: Annotated[UploadFile | None, File()] = None,
 ):
     validar_niveis(limite_critico, limite_baixo)
@@ -374,6 +391,7 @@ async def criar_produto(
         quantidade=quantidade,
         limite_critico=limite_critico,
         limite_baixo=limite_baixo,
+        preco_centavos=round(preco * 100),
     )
     if foto and foto.filename:
         produto.foto = await salvar_foto(foto)
@@ -398,6 +416,7 @@ async def atualizar_produto(
     quantidade: Annotated[int, Form(ge=0)],
     limite_critico: Annotated[int, Form(ge=0)],
     limite_baixo: Annotated[int, Form(ge=1)],
+    preco: Annotated[float, Form(ge=0, le=10_000_000)],
     remover_foto: Annotated[bool, Form()] = False,
     foto: Annotated[UploadFile | None, File()] = None,
 ):
@@ -414,6 +433,7 @@ async def atualizar_produto(
     produto.quantidade = quantidade
     produto.limite_critico = limite_critico
     produto.limite_baixo = limite_baixo
+    produto.preco_centavos = round(preco * 100)
     if nova_foto:
         produto.foto = nova_foto
     elif remover_foto:
@@ -433,6 +453,8 @@ async def atualizar_produto(
 def excluir_produto(produto_id: int, db: DB):
     produto = buscar(db, Produto, produto_id, "Produto")
     foto = produto.foto
+    # As vendas continuam no histórico (nome e código ficam guardados em cada item).
+    db.execute(update(ItemVenda).where(ItemVenda.produto_id == produto.id).values(produto_id=None))
     db.delete(produto)
     db.commit()
     apagar_foto(foto)

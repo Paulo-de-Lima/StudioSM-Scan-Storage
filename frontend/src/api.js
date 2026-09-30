@@ -62,6 +62,17 @@ export const atualizarCategoria = (id, dados) =>
   requisicao(`/api/categorias/${id}`, json('PUT', dados))
 export const excluirCategoria = (id) => requisicao(`/api/categorias/${id}`, { method: 'DELETE' })
 
+// ---------- vendas
+export function listarVendas(filtros = {}) {
+  const params = new URLSearchParams(
+    Object.entries(filtros).filter(([, valor]) => valor !== '' && valor != null),
+  )
+  return requisicao(`/api/vendas?${params}`)
+}
+export const criarVenda = (dados) => requisicao('/api/vendas', json('POST', dados))
+export const atualizarVenda = (id, dados) => requisicao(`/api/vendas/${id}`, json('PUT', dados))
+export const excluirVenda = (id) => requisicao(`/api/vendas/${id}`, { method: 'DELETE' })
+
 // ---------- marcas
 export const listarMarcas = () => requisicao('/api/marcas')
 export const criarMarca = (dados) => requisicao('/api/marcas', json('POST', dados))
